@@ -92,7 +92,13 @@ public class AuthzClient {
      * @return a new instance
      */
     public static AuthzClient create(Configuration configuration) {
-        CryptoIntegration.init(AuthzClient.class.getClassLoader());
+        // Only initialize CryptoIntegration if no provider has been set yet.
+        // This prevents overwriting the server's CryptoProvider (e.g. DefaultCryptoProvider
+        // or FIPS1402Provider) when AuthzClient is used inside the Keycloak server, and
+        // avoids the non-thread-safe repeated initialization on every create() call.
+        if (CryptoIntegration.getProvider() == null) {
+            CryptoIntegration.init(AuthzClient.class.getClassLoader());
+        }
         return new AuthzClient(configuration);
     }
 

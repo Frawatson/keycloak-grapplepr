@@ -62,11 +62,11 @@ public class CryptoIntegration {
         } else {
             logger.debugf("Detected crypto provider: %s", foundProviders.get(0).getClass().getName());
             if (foundProviders.size() > 1) {
-                StringBuilder builder = new StringBuilder("Ignored crypto providers: ");
-                for (int i = 1 ; i < foundProviders.size() ; i++) {
-                    builder.append(foundProviders.get(i).getClass().getName() + ", ");
-                }
-                logger.debugf(builder.toString());
+                String ignored = foundProviders.subList(1, foundProviders.size()).stream()
+                        .map(p -> p.getClass().getName())
+                        .collect(Collectors.joining(", "));
+                logger.warnf("Multiple crypto providers found on classpath. Using '%s'. Ignored providers: %s",
+                        foundProviders.get(0).getClass().getName(), ignored);
             }
             return foundProviders.get(0);
         }

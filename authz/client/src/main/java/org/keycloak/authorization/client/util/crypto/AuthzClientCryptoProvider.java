@@ -50,6 +50,8 @@ import org.keycloak.common.crypto.PemUtilsProvider;
 import org.keycloak.common.crypto.UserIdentityExtractorProvider;
 import org.keycloak.common.util.KeystoreUtil;
 
+import java.security.Security;
+
 /**
  * <p>Simple crypto provider to be used with the authz-client.</p>
  *
@@ -59,11 +61,8 @@ public class AuthzClientCryptoProvider implements CryptoProvider {
 
     @Override
     public Provider getBouncyCastleProvider() {
-        try {
-            return KeyStore.getInstance(KeyStore.getDefaultType()).getProvider();
-        } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
-        }
+        // Returns null if BouncyCastle is not registered, which is valid for this lightweight provider
+        return Security.getProvider("BC");
     }
 
     @Override

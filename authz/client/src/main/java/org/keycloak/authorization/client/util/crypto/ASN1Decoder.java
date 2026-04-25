@@ -131,7 +131,7 @@ class ASN1Decoder {
         }
 
         if (length == 0x80) {
-            return -1;      // indefinite-length encoding
+            throw new IOException("DER encoding does not support indefinite-length encoding (BER 0x80 tag)");
         }
 
         if (length > 127) {
@@ -189,6 +189,7 @@ class ASN1Decoder {
     int reset() {
         int tmp = count;
         is.reset();
+        count = 0;
         return tmp;
     }
 
