@@ -110,9 +110,13 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
                     formData.add("rememberMe", "on");
                 }
             }
+            // setup webauthn data for initial login (no user selected yet) when passkeys enabled
+            if (webauthnAuth != null && webauthnAuth.isPasskeysEnabled()) {
+                webauthnAuth.fillContextForm(context);
+            }
         }
-        // setup webauthn data when passkeys enabled
-        if (isConditionalPasskeysEnabled(context.getUser())) {
+        // setup webauthn data for re-authentication (user already set) when passkeys enabled
+        if (context.getUser() != null && isConditionalPasskeysEnabled(context.getUser())) {
             webauthnAuth.fillContextForm(context);
         }
         Response challengeResponse = challenge(context, formData);
