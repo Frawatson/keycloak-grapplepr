@@ -20,6 +20,8 @@ package org.keycloak.testsuite.organization.cache;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+// NOTE: The following imports intentionally reference Infinispan internals to verify cache key behavior in integration tests.
+// If the caching strategy changes, these imports and the tests using them must be updated accordingly.
 import static org.keycloak.models.cache.infinispan.idp.InfinispanIdentityProviderStorageProvider.cacheKeyForLogin;
 import static org.keycloak.models.cache.infinispan.idp.InfinispanIdentityProviderStorageProvider.cacheKeyOrgId;
 import static org.keycloak.models.cache.infinispan.organization.InfinispanOrganizationProvider.cacheKeyOrgMemberCount;
@@ -378,7 +380,8 @@ public class OrganizationCacheTest extends AbstractOrganizationTest {
             if (i >= 10)
                 idpRep.getConfig().put(OrganizationModel.BROKER_PUBLIC, Boolean.TRUE.toString());
             testRealm().identityProviders().create(idpRep).close();
-            getCleanup().addCleanup(testRealm().identityProviders().get("alias")::remove);
+            final String idpAlias = "idp-alias-" + i;
+            getCleanup().addCleanup(testRealm().identityProviders().get(idpAlias)::remove);
         }
 
         String orgaId = testRealm().organizations().getAll().get(0).getId();
@@ -422,7 +425,7 @@ public class OrganizationCacheTest extends AbstractOrganizationTest {
         idpRep.setDisplayName("Broker " + 20);
         idpRep.setProviderId("keycloak-oidc");
         testRealm().identityProviders().create(idpRep).close();
-        getCleanup().addCleanup(testRealm().identityProviders().get("alias")::remove);
+        getCleanup().addCleanup(testRealm().identityProviders().get("idp-alias-20")::remove);
 
         // remove one IDP that was not available for login.
         testRealm().identityProviders().get("idp-alias-1").remove();
