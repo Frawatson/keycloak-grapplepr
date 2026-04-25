@@ -30,6 +30,7 @@ import org.keycloak.authorization.client.resource.AuthorizationResource;
 import org.keycloak.authorization.client.resource.ProtectionResource;
 import org.keycloak.authorization.client.util.Http;
 import org.keycloak.authorization.client.util.TokenCallable;
+import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.common.util.KeycloakUriBuilder;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.util.SystemPropertiesJsonParserFactory;
@@ -91,6 +92,13 @@ public class AuthzClient {
      * @return a new instance
      */
     public static AuthzClient create(Configuration configuration) {
+        // Only initialize CryptoIntegration if no provider has been set yet.
+        // This prevents overwriting the server's CryptoProvider (e.g. DefaultCryptoProvider
+        // or FIPS1402Provider) when AuthzClient is used inside the Keycloak server, and
+        // avoids the non-thread-safe repeated initialization on every create() call.
+        if (CryptoIntegration.getProvider() == null) {
+            CryptoIntegration.init(AuthzClient.class.getClassLoader());
+        }
         return new AuthzClient(configuration);
     }
 
