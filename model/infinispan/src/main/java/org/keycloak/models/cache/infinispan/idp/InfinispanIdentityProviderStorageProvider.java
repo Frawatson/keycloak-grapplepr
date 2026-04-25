@@ -97,14 +97,18 @@ public class InfinispanIdentityProviderStorageProvider implements IdentityProvid
     @Override
     public boolean remove(String alias) {
         String cacheKey = cacheKeyIdpAlias(getRealm(), alias);
-        IdentityProviderModel storedIdp = idpDelegate.getByAlias(alias);
+        IdentityProviderModel storedIdp;
         if (isInvalid(cacheKey)) {
             //lookup idp by alias in cache to be able to invalidate its internalId
+            storedIdp = idpDelegate.getByAlias(alias);
             registerIDPInvalidation(storedIdp);
         } else {
             CachedIdentityProvider cached = realmCache.getCache().get(cacheKey, CachedIdentityProvider.class);
             if (cached != null) {
+                storedIdp = cached.getIdentityProvider();
                 registerIDPInvalidation(cached.getIdentityProvider());
+            } else {
+                storedIdp = idpDelegate.getByAlias(alias);
             }
         }
         registerCountInvalidation();
@@ -381,7 +385,8 @@ public class InfinispanIdentityProviderStorageProvider implements IdentityProvid
 
     private void registerIDPLoginInvalidation(IdentityProviderModel idp) {
         // only invalidate login caches if the IDP qualifies as a login IDP.
-        if (getLoginPredicate().test(idp)) {
+        Predicate<IdentityProviderModel> loginPredicate = getLoginPredicate();
+        if (loginPredicate.test(idp)) {
             for (FetchMode mode : FetchMode.values()) {
                 realmCache.registerInvalidation(cacheKeyForLogin(getRealm(), mode));
             }
@@ -401,12 +406,13 @@ public class InfinispanIdentityProviderStorageProvider implements IdentityProvid
      * @param updated the identity provider's updated model
      */
     private void registerIDPLoginInvalidationOnUpdate(IdentityProviderModel original, IdentityProviderModel updated) {
+        Predicate<IdentityProviderModel> loginPredicate = getLoginPredicate();
         // IDP isn't currently available for login and update preserves that - no need to invalidate.
-        if (!getLoginPredicate().test(original) && !getLoginPredicate().test(updated)) {
+        if (!loginPredicate.test(original) && !loginPredicate.test(updated)) {
             return;
         }
         // IDP is currently available for login and update preserves that, including organization link - no need to invalidate.
-        if (getLoginPredicate().test(original) && getLoginPredicate().test(updated)
+        if (loginPredicate.test(original) && loginPredicate.test(updated)
                 && Objects.equals(original.getOrganizationId(), updated.getOrganizationId())) {
             return;
         }
