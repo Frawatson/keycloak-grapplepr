@@ -219,11 +219,7 @@ public abstract class AbstractUsernameFormAuthenticator extends AbstractFormAuth
         context.getEvent().user(user);
         context.getEvent().error(Errors.INVALID_USER_CREDENTIALS);
 
-        if (isUserAlreadySetBeforeUsernamePasswordAuth(context)) {
-            LoginFormsProvider form = context.form();
-            form.setAttribute(LoginFormsProvider.USERNAME_HIDDEN, true);
-            form.setAttribute(LoginFormsProvider.REGISTRATION_DISABLED, true);
-        }
+        AuthenticatorUtils.setupReauthenticationInUsernamePasswordFormError(context);
 
         Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_PASSWORD);
         if(isEmptyPassword) {
