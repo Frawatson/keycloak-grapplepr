@@ -116,7 +116,7 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
             }
         }
         // setup webauthn data for re-authentication (user already set) when passkeys enabled
-        if (context.getUser() != null && isConditionalPasskeysEnabled(context.getUser())) {
+        if (isConditionalPasskeysEnabled(context.getUser())) {
             webauthnAuth.fillContextForm(context);
         }
         Response challengeResponse = challenge(context, formData);
@@ -138,8 +138,11 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
 
     @Override
     protected Response challenge(AuthenticationFlowContext context, String error, String field) {
-        if (isConditionalPasskeysEnabled(context.getUser())) {
-            // setup webauthn data when possible
+        if (context.getUser() == null && webauthnAuth != null && webauthnAuth.isPasskeysEnabled()) {
+            // setup webauthn data for initial login (no user selected yet) when passkeys enabled
+            webauthnAuth.fillContextForm(context);
+        } else if (isConditionalPasskeysEnabled(context.getUser())) {
+            // setup webauthn data for re-authentication (user already set) when passkeys enabled
             webauthnAuth.fillContextForm(context);
         }
         return super.challenge(context, error, field);
